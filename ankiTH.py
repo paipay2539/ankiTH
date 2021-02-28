@@ -6,8 +6,21 @@ sys.dont_write_bytecode = True
 import rainbow_divider_lib as rdl
 
 
+def progress(count, total, suffix=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '#' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
+    sys.stdout.flush()  # As suggested by Rom Ruben
+    if percents == 100:
+        print("")
+
+
 def search_vocab_en(word, exactly_mode=False,
-                 src="NECTEC Lexitron Dictionary EN-TH"):
+                    src="NECTEC Lexitron Dictionary EN-TH"):
     url = requests.get("https://dict.longdo.com/mobile.php?search="+word)
     soup = BeautifulSoup(url.content, "html.parser")
     target_src_exist = soup.find("b", string=src)
@@ -51,14 +64,15 @@ def search_vocab_jp(word, exactly_mode=False):
     url = requests.get("https://j-doradic.com/?searchPosition=searchBetween&q="+word)
     soup = BeautifulSoup(url.content, "html.parser")
     target_exist = soup.find("table", class_="table table-striped")
-    #print(data.prettify())
+    # print(data.prettify())
     if target_exist is not None:
         data = soup.find("table", class_="table table-striped").tbody
         descendant_lst = []
         for d in data.descendants:
             if d.name == "a" and d.text != "thumb_up" and len(d.attrs) == 1:
-                descendant_lst.append(d.text)
-                #print(d.text)
+                descendant_lst.append(d.text.replace('\n', ' ')
+                                      .replace('\r', ''))
+                # print(d.text.replace('\n', ' ').replace('\r', ''))
 
         if len(descendant_lst) % 3 == 0:
             result_lst = []
@@ -133,7 +147,8 @@ def ankiTH(input_text):
     vocab_lst = read_txt(input_text+'.txt')
     output = open(input_text+'_output.txt', "w", encoding="utf8")
     fail_output = open(input_text+'_fail_output.txt', "w", encoding="utf8")
-    for vocab in vocab_lst:
+    for vocab_cnt, vocab in enumerate(vocab_lst):
+
         if 'jp' in input_text:
             meaning_lst = search_vocab_jp(vocab)
         elif 'en' in input_text:
@@ -147,11 +162,13 @@ def ankiTH(input_text):
             output.write(vocab + '@' + meaning_text + '\n')
         else:
             fail_output.write(vocab + '\n')
+        progress(vocab_cnt, len(vocab_lst)-1)
     output.close()
     # search_vocab_en('carrot')
 
 
 def main():
+    #ankiTH('N3_jp')
     ankiTH('vocab_jp')
     ankiTH('vocab_en')
 
