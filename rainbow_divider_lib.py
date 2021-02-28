@@ -13,19 +13,33 @@ def rgba2rgb(rgba, background=(255, 255, 255)):
 
 def rainbow_fill(divider, cmap=plt.get_cmap("jet")):
     rainbow_lst = []
-    offset = 100
+    offset = 120
     for n in range(divider):
         color_rgba = cmap(n/divider)
         rgb = rgba2rgb(color_rgba)
         for idx in range(len(rgb)):
             rgb[idx] = int(rgb[idx]*255)
-
+        '''
         if (rgb[0] + offset <= 255) or \
                 (rgb[1] + offset <= 255) or \
                 (rgb[2] + offset <= 255):
             rgb[0] = rgb[0] + offset
             rgb[1] = rgb[1] + offset
             rgb[2] = rgb[2] + offset
+        '''
+        if rgb[0] + offset < 255:
+            rgb[0] = rgb[0] + offset
+        else:
+            rgb[0] = 255
+        if rgb[1] + offset < 255:
+            rgb[1] = rgb[1] + offset
+        else:
+            rgb[1] = 255
+        if rgb[2] + offset < 255:
+            rgb[2] = rgb[2] + offset
+        else:
+            rgb[2] = 255
+
         rainbow_lst.append(rgb)
     return rainbow_lst
 
