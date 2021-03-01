@@ -1,6 +1,9 @@
 from bs4 import BeautifulSoup
 import requests
 
+from gtts import gTTS
+from playsound import playsound
+
 import sys
 sys.dont_write_bytecode = True
 import rainbow_divider_lib as rdl
@@ -61,7 +64,12 @@ def search_vocab_en(word, exactly_mode=False,
 
 
 def search_vocab_jp(word, exactly_mode=False):
-    url = requests.get("https://j-doradic.com/?searchPosition=searchBetween&q="+word)
+    '''search_mode = 'Start', 'End', 'Between', 'Exact' '''
+    if exactly_mode is True:
+        search_mode = 'Exact'
+    else:
+        search_mode = 'Between'
+    url = requests.get("https://j-doradic.com/?searchPosition=search"+search_mode+"&q="+word)
     soup = BeautifulSoup(url.content, "html.parser")
     target_exist = soup.find("table", class_="table table-striped")
     # print(data.prettify())
@@ -123,6 +131,7 @@ def find_text_between(text, start, end):
 
 def text_convert(meaning_lst, vocab):
     text = ''
+    exactly_text = ''
     rgb_lst = rdl.divider2str(len(meaning_lst))
     for idx, meaning in enumerate(meaning_lst):
         # print(meaning[1])
@@ -135,31 +144,44 @@ def text_convert(meaning_lst, vocab):
         if is_exactly_vocab:
             found_vocab = '<span style="color:rgb(102, 255, 153); font-size:30px">'+meaning[0]+'</span>'
             found_meaning = '<span style="color:rgb(102, 255, 153); font-size:30px">'+meaning[1]+'</span>'
+            exactly_text = meaning[0]
         else:
-            found_vocab = '<span style="color:rgb'+ rgb_lst[idx] +'; font-size:15px">'+meaning[0]+'</span>'
-            found_meaning = '<span style="color:rgb'+ rgb_lst[idx] +'; font-size:15px">'+meaning[1]+'</span>'
+            found_vocab = '<span style="color:rgb'+ rgb_lst[idx] +'; font-size:20px">'+meaning[0]+'</span>'
+            found_meaning = '<span style="color:rgb'+ rgb_lst[idx] +'; font-size:20px">'+meaning[1]+'</span>'
         new_text = found_vocab + ' : ' + found_meaning
         text = text + new_text + '<br>'
-    return text
+    return text, exactly_text
 
 
-def ankiTH(input_text):
-    vocab_lst = read_txt(input_text+'.txt')
-    output = open(input_text+'_output.txt', "w", encoding="utf8")
-    fail_output = open(input_text+'_fail_output.txt', "w", encoding="utf8")
+def text2sound(vocab, sound_number):
+    tts = gTTS(text=vocab, lang='ja')
+    tts.save('data/output/sound/#' + sound_number + '.mp3')
+
+
+def ankiTH(input_text, gen_sound=False, exactly_mode=False):
+    vocab_lst = read_txt('data/input/'+input_text+'.txt')
+    output = open('data/output/'+input_text+'_output.txt', "w", encoding="utf8")
+    fail_output = open('data/output/'+input_text+'_fail_output.txt', "w", encoding="utf8")
     for vocab_cnt, vocab in enumerate(vocab_lst):
-
         if 'jp' in input_text:
-            meaning_lst = search_vocab_jp(vocab)
+            meaning_lst = search_vocab_jp(vocab, exactly_mode)
         elif 'en' in input_text:
-            meaning_lst = search_vocab_en(vocab)
+            meaning_lst = search_vocab_en(vocab, exactly_mode)
         else:
             break
         if meaning_lst is not None:
             # print(search_vocab_en(vocab))
-            meaning_text = text_convert(meaning_lst, vocab)
-            vocab = '<span style="color:rgb(233, 253, 226); font-size:60px">'+vocab+'</span>'
-            output.write(vocab + '@' + meaning_text + '\n')
+            meaning_text, furigana = text_convert(meaning_lst, vocab)
+
+            if gen_sound is True:
+                sound_number = input_text + '_' + str(vocab_cnt)
+                sound_call_name = '[sound:#' + sound_number + '.mp3]'
+                text2sound(vocab, sound_number)
+            else:
+                sound_call_name = ''
+
+            vocab = '<span style="color:rgb(233, 253, 226); font-size:50px">' + vocab + '</span>'
+            output.write(vocab + '@' + meaning_text + sound_call_name + '@' + furigana + '\n')
         else:
             fail_output.write(vocab + '\n')
         progress(vocab_cnt, len(vocab_lst)-1)
@@ -168,9 +190,9 @@ def ankiTH(input_text):
 
 
 def main():
-    #ankiTH('N3_jp')
-    ankiTH('vocab_jp')
-    ankiTH('vocab_en')
+    # ankiTH('N3_500_jp')
+    ankiTH('vocab_jp', gen_sound=True)
+    ankiTH('vocab_en', gen_sound=True)
 
 
 if __name__ == '__main__':
