@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 import requests
 
+import os
+
 from gtts import gTTS
 from playsound import playsound
 
@@ -214,8 +216,22 @@ def ankiTH(input_text, gen_sound=False, exactly_mode=False):
 
 
 def main():
+
+    do_list = [
+             #  'N3_100_jp.txt',
+             #  'N3_500_jp.txt',
+             #  'N3_full_jp.txt',
+               'vocab_en.txt',
+               'vocab_jp.txt'
+               ]
+    directory = 'data/input/'
+    for filename in os.listdir(directory):
+        if filename.endswith(".txt") and filename in do_list:
+            ankiTH(os.path.splitext(filename)[0],
+                   gen_sound=True, exactly_mode=False)
+
     # ankiTH('N3_full_jp', gen_sound=True, exactly_mode=False)
-    ankiTH('N3_100_jp', gen_sound=False, exactly_mode=False)
+    # ankiTH('N3_100_jp', gen_sound=False, exactly_mode=False)
     # ankiTH('vocab_jp', gen_sound=True, exactly_mode=False)
     # ankiTH('vocab_en', gen_sound=True, exactly_mode=False)
 
