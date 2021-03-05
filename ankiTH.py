@@ -144,12 +144,17 @@ def text_convert(meaning_lst, vocab):
         if is_exactly_vocab:
             found_vocab = '<span style="color:rgb(102, 255, 153); font-size:30px">'+meaning[0]+'</span>'
             found_meaning = '<span style="color:rgb(102, 255, 153); font-size:30px">'+meaning[1]+'</span>'
-            exactly_text = meaning[0]
+            exactly_text = '<span style="color:rgb(233, 253, 226); font-size:50px">'+meaning[0]+'</span>'
         else:
             found_vocab = '<span style="color:rgb'+ rgb_lst[idx] +'; font-size:20px">'+meaning[0]+'</span>'
             found_meaning = '<span style="color:rgb'+ rgb_lst[idx] +'; font-size:20px">'+meaning[1]+'</span>'
         new_text = found_vocab + ' : ' + found_meaning
-        text = text + new_text + '<br>'
+
+        if is_exactly_vocab:
+            text = new_text + '<br>' + text
+        else:
+            text = text + new_text + '<br>'
+
     return text, exactly_text
 
 
@@ -165,23 +170,28 @@ def ankiTH(input_text, gen_sound=False, exactly_mode=False):
     for vocab_cnt, vocab in enumerate(vocab_lst):
         if 'jp' in input_text:
             meaning_lst = search_vocab_jp(vocab, exactly_mode)
+            furigana_offset = "</br>"
         elif 'en' in input_text:
             meaning_lst = search_vocab_en(vocab, exactly_mode)
+            furigana_offset = ""
         else:
             break
         if meaning_lst is not None:
             # print(search_vocab_en(vocab))
             meaning_text, furigana = text_convert(meaning_lst, vocab)
-
             if gen_sound is True:
                 sound_number = input_text + '_' + str(vocab_cnt)
                 sound_call_name = '[sound:#' + sound_number + '.mp3]'
                 text2sound(vocab, sound_number)
             else:
                 sound_call_name = ''
-
-            vocab = '<span style="color:rgb(233, 253, 226); font-size:50px">' + vocab + '</span>'
-            output.write(vocab + '@' + meaning_text + sound_call_name + '@' + furigana + '\n')
+            vocab = '<span style="color:rgb(233, 253, 226); font-size:50px">' \
+                    + "<ruby>" + vocab + "<rt>" + furigana_offset \
+                    + "</rt></ruby>" + '</span>'
+            if furigana == '':
+                furigana = vocab
+            output.write(vocab + '@' + meaning_text + sound_call_name
+                         + '@' + furigana + '\n')
         else:
             fail_output.write(vocab + '\n')
         progress(vocab_cnt, len(vocab_lst)-1)
@@ -190,9 +200,10 @@ def ankiTH(input_text, gen_sound=False, exactly_mode=False):
 
 
 def main():
-    # ankiTH('N3_500_jp')
-    ankiTH('vocab_jp', gen_sound=True)
-    ankiTH('vocab_en', gen_sound=True)
+    # ankiTH('N3_full_jp'gen_sound=True, exactly_mode=False)
+    # ankiTH('N3_100_jp'gen_sound=True, exactly_mode=False)
+    ankiTH('vocab_jp', gen_sound=True, exactly_mode=False)
+    ankiTH('vocab_en', gen_sound=True, exactly_mode=False)
 
 
 if __name__ == '__main__':
