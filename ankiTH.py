@@ -22,6 +22,14 @@ def progress(count, total, suffix=''):
         print("")
 
 
+def remove_repeated_element(test_list):
+    res = []
+    for i in test_list:
+        if i not in res:
+            res.append(i)
+    return res
+
+
 def search_vocab_en(word, exactly_mode=False,
                     src="NECTEC Lexitron Dictionary EN-TH"):
     url = requests.get("https://dict.longdo.com/mobile.php?search="+word)
@@ -69,7 +77,8 @@ def search_vocab_jp(word, exactly_mode=False):
         search_mode = 'Exact'
     else:
         search_mode = 'Between'
-    url = requests.get("https://j-doradic.com/?searchPosition=search"+search_mode+"&q="+word)
+    url = requests.get("https://j-doradic.com/?searchPosition=search"
+                       + search_mode + "&q=" + word)
     soup = BeautifulSoup(url.content, "html.parser")
     target_exist = soup.find("table", class_="table table-striped")
     # print(data.prettify())
@@ -170,6 +179,11 @@ def ankiTH(input_text, gen_sound=False, exactly_mode=False):
     for vocab_cnt, vocab in enumerate(vocab_lst):
         if 'jp' in input_text:
             meaning_lst = search_vocab_jp(vocab, exactly_mode)
+            if exactly_mode is False:
+                meaning_lst_exact = search_vocab_jp(vocab, True)
+                if meaning_lst is not None and meaning_lst_exact is not None:
+                    meaning_lst = meaning_lst_exact + meaning_lst
+                    meaning_lst = remove_repeated_element(meaning_lst)
             furigana_offset = "</br>"
         elif 'en' in input_text:
             meaning_lst = search_vocab_en(vocab, exactly_mode)
@@ -200,10 +214,10 @@ def ankiTH(input_text, gen_sound=False, exactly_mode=False):
 
 
 def main():
-    # ankiTH('N3_full_jp'gen_sound=True, exactly_mode=False)
-    # ankiTH('N3_100_jp'gen_sound=True, exactly_mode=False)
-    ankiTH('vocab_jp', gen_sound=True, exactly_mode=False)
-    ankiTH('vocab_en', gen_sound=True, exactly_mode=False)
+    # ankiTH('N3_full_jp', gen_sound=True, exactly_mode=False)
+    ankiTH('N3_100_jp', gen_sound=False, exactly_mode=False)
+    # ankiTH('vocab_jp', gen_sound=True, exactly_mode=False)
+    # ankiTH('vocab_en', gen_sound=True, exactly_mode=False)
 
 
 if __name__ == '__main__':
